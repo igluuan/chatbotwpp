@@ -81,7 +81,6 @@ class WhatsAppService {
 
     this.client.on('message', handleMessage);
 
-    this.initialize();
   }
 }
 
