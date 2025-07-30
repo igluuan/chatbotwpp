@@ -105,7 +105,6 @@ export const handleMessage = async (message: Message) => {
         message.reply('❌ Ocorreu um erro ao definir seu limite. Tente novamente.');
       }
       break;
-}
     case '/ajuda':
       message.reply(
         '*Comandos disponíveis:*\n\n' +
