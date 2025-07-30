@@ -37,6 +37,10 @@ const ajudaSchema = z.object({
   command: z.literal('/ajuda'),
 });
 
+const gastosSchema = z.object({
+  command: z.literal('/gastos'),
+});
+
 const commandSchema = z.union([
   gastoSchema,
   receitaSchema,
@@ -44,6 +48,7 @@ const commandSchema = z.union([
   relatorioSchema,
   categoriasSchema,
   limiteSchema,
+  gastosSchema,
   ajudaSchema,
 ]);
 
@@ -79,6 +84,8 @@ export const parseCommand = (message: string) => {
       });
     case '/ajuda':
       return ajudaSchema.safeParse({ command });
+    case '/gastos':
+      return gastosSchema.safeParse({ command });
     default:
       return null;
   }

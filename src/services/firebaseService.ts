@@ -107,6 +107,30 @@ class FirebaseService {
     const monthYear = budget.monthYear || new Date().toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' });
     await db.collection('orcamentos').add({ ...budget, monthYear });
   }
+
+  public async getExpenses(userId: string): Promise<Transaction[]> {
+    const snapshot = await db
+      .collection('transacoes')
+      .where('userId', '==', userId)
+      .where('type', '==', 'despesa')
+      .orderBy('date', 'desc') // Order by date, newest first
+      .get();
+
+    const expenses: Transaction[] = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      expenses.push({
+        userId: data.userId,
+        type: data.type,
+        value: data.value,
+        category: data.category,
+        description: data.description,
+        date: data.date.toDate(), // Convert Firebase Timestamp to Date
+      });
+    });
+
+    return expenses;
+  }
 }
 
 export default new FirebaseService();

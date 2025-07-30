@@ -117,5 +117,23 @@ export const handleMessage = async (message: Message) => {
           '*/ajuda* - Exibe esta mensagem de ajuda'
       );
       break;
+    case '/gastos':
+      try {
+        const expenses = await firebaseService.getExpenses(message.from);
+        if (expenses.length === 0) {
+          message.reply('Você ainda não registrou nenhum gasto.');
+          return;
+        }
+        const expensesList = expenses.map(exp => {
+          const date = exp.date ? exp.date.toLocaleDateString('pt-BR') : 'N/A';
+          return `*${date}* - R$ ${exp.value.toFixed(2)} (${exp.category}) - ${exp.description || 'Sem descrição'}`;
+        }).join('\n');
+        message.reply(`📊 *Seus Últimos Gastos:*
+${expensesList}`);
+      } catch (error) {
+        console.error("Erro ao buscar gastos:", error);
+        message.reply('❌ Ocorreu um erro ao buscar seus gastos. Tente novamente.');
+      }
+      break;
   }
 };
