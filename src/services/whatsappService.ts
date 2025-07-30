@@ -36,6 +36,10 @@ class WhatsAppService {
     this.client.sendMessage(to, message);
   }
 
+  public initialize() {
+    this.client.initialize();
+  }
+
   public getQrCodeData(): string | null {
     return this.qrCodeData;
   }
