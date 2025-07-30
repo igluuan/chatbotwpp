@@ -1,0 +1,116 @@
+# TAREFA: BOT WHATSAPP PARA GESTÃO FINANCEIRA FAMILIAR
+
+## OBJETIVO PRINCIPAL
+Desenvolver um bot para WhatsApp que permita o controle de gastos e receitas familiares através de comandos simples, com relatórios automáticos e sincronização em tempo real usando Firebase.
+
+## REQUISITOS TÉCNICOS
+
+STACK PRINCIPAL:
+- Node.js (LTS)
+- TypeScript
+- Firebase (Storage)
+- WhatsApp Web JS
+
+DEPENDÊNCIAS PRINCIPAIS:
+- firebase-admin
+- whatsapp-web.js
+- zod
+- node-cron
+
+## COMANDOS IMPLEMENTAR
+
+1. REGISTRO:
+- /gasto [valor] [categoria] [descrição]
+- /receita [valor] [fonte] [descrição]
+
+2. CONSULTA:
+- /saldo
+- /relatorio [mês/ano]
+- /categorias
+
+3. CONFIGURAÇÃO:
+- /limite [categoria] [valor]
+- /ajuda
+
+## ESTRUTURA FIREBASE
+
+COLETÂNEAS PRINCIPAIS:
+1. usuarios:
+   - id (string)
+   - nome (string)
+   - telefone (string)
+   - ativo (boolean)
+
+2. transacoes:
+   - id (string)
+   - usuarioId (string)
+   - tipo (receita/despesa)
+   - valor (number)
+   - categoria (string)
+   - descricao (string)
+   - data (timestamp)
+
+3. orcamentos:
+   - usuarioId (string)
+   - categoria (string)
+   - limite (number)
+   - mesAno (string)
+
+## FLUXO DE TRABALHO
+
+1. CONFIGURAÇÃO INICIAL:
+- Criar projeto Firebase
+- Gerar chaves de serviço
+- Configurar regras de segurança
+- Inicializar repositório Git
+
+2. DESENVOLVIMENTO:
+- Implementar autenticação
+- Criar handlers de comandos
+- Desenvolver sincronização Firebase
+- Implementar relatórios
+
+3. TESTES:
+- Testes unitários
+- Testes de integração
+- Validação com usuários reais
+
+4. IMPLANTAÇÃO:
+- Configurar ambiente produção
+- Implementar monitoramento
+- Criar sistema de backups
+
+## DOCUMENTAÇÃO NECESSÁRIA
+
+LINKS IMPORTANTES:
+- Firebase Setup: https://firebase.google.com/docs/web/setup
+- WhatsApp Web JS: https://docs.wwebjs.dev/
+
+## ENTREGÁVEIS
+
+1. CÓDIGO FONTE:
+- Repositório Git completo
+- Dockerfile (opcional)
+- Scripts de deploy
+
+2. DOCUMENTAÇÃO:
+- README.md com instruções
+- Guia de comandos para usuários
+- Documentação técnica
+
+3. RELATÓRIOS:
+- Relatório de testes
+- Manual de implantação
+- Guia de manutenção
+
+## OBSERVAÇÕES FINAIS
+
+1. PERFORMANCE:
+- Otimizar consultas Firestore
+- Limitar operações de escrita
+- Implementar cache local
+
+2. USABILIDADE:
+- Mensagens claras em PT-BR
+- Feedback imediato para usuário
+- Tratamento de erros amigável
