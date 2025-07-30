@@ -18,6 +18,11 @@ app.get('/qrcode', (req, res) => {
   }
 });
 
+app.get('/reset-qrcode', async (req, res) => {
+  await whatsAppService.resetAndInitialize();
+  res.send('WhatsApp client reset and re-initialized. Check /qrcode for new QR code.');
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
