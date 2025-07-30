@@ -2,7 +2,8 @@ import { Client, LocalAuth } from 'whatsapp-web.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const SESSION_PATH = path.join(process.cwd(), '.wwebjs_auth', 'session');
+const BASE_SESSION_DIR = process.env.WHATSAPP_SESSION_DIR || path.join(process.cwd(), '.wwebjs_auth');
+const SESSION_PATH = path.join(BASE_SESSION_DIR, 'session');
 import * as qrcode from 'qrcode';
 import { handleMessage } from '../handlers/messageHandler';
 
@@ -12,7 +13,10 @@ class WhatsAppService {
 
   constructor() {
     this.client = new Client({
-      authStrategy: new LocalAuth(),
+      authStrategy: new LocalAuth({
+        clientId: 'whatsapp-bot',
+        dataPath: BASE_SESSION_DIR,
+      }),
     });
 
     this.client.on('qr', (qr) => {
@@ -67,7 +71,10 @@ class WhatsAppService {
 
     this.qrCodeData = null;
     this.client = new Client({
-      authStrategy: new LocalAuth(),
+      authStrategy: new LocalAuth({
+        clientId: 'whatsapp-bot',
+        dataPath: BASE_SESSION_DIR,
+      }),
     });
 
     this.client.on('qr', (qr) => {
