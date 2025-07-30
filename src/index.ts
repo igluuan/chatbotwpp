@@ -26,3 +26,5 @@ app.get('/reset-qrcode', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+whatsAppService.initialize();
