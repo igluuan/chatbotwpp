@@ -1,9 +1,10 @@
 import { Client, LocalAuth } from 'whatsapp-web.js';
-import qrcode from 'qrcode-terminal';
+import * as qrcode from 'qrcode';
 import { handleMessage } from '../handlers/messageHandler';
 
 class WhatsAppService {
   private client: Client;
+  private qrCodeData: string | null = null;
 
   constructor() {
     this.client = new Client({
@@ -11,7 +12,13 @@ class WhatsAppService {
     });
 
     this.client.on('qr', (qr) => {
-      qrcode.generate(qr, { small: true });
+      qrcode.toDataURL(qr, (err, url) => {
+        if (err) {
+          console.error('Error generating QR code:', err);
+          return;
+        }
+        this.qrCodeData = url;
+      });
     });
 
     this.client.on('ready', () => {
@@ -23,6 +30,10 @@ class WhatsAppService {
 
   public sendMessage(to: string, message: string) {
     this.client.sendMessage(to, message);
+  }
+
+  public getQrCodeData(): string | null {
+    return this.qrCodeData;
   }
 
   public initialize() {

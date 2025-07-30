@@ -9,6 +9,15 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+app.get('/qrcode', (req, res) => {
+  const qrCodeData = whatsAppService.getQrCodeData();
+  if (qrCodeData) {
+    res.send(`<img src="${qrCodeData}" alt="QR Code">`);
+  } else {
+    res.send('QR Code not available yet. Please wait a few moments and refresh.');
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
