@@ -41,7 +41,8 @@ class WhatsAppService {
   }
 
   public async resetAndInitialize() {
-    if (this.client) {
+    // Only attempt to destroy if the client and its internal browser instance exist
+    if (this.client && (this.client as any)._puppeteer && (this.client as any)._puppeteer.browser) {
       try {
         await this.client.destroy();
         console.log('WhatsApp client destroyed.');
