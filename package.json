@@ -1,0 +1,30 @@
+{
+  "name": "projetonodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "echo "Error: no test specified" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.4.0",
+    "node-cron": "^4.2.1",
+    "qrcode-terminal": "^0.12.0",
+    "typescript": "^5.8.3",
+    "whatsapp-web.js": "^1.31.0",
+    "zod": "^4.0.14"
+  },
+  "devDependencies": {
+    "@types/qrcode-terminal": "^0.12.2",
+    "ts-node": "^10.9.2"
+  }
+}
