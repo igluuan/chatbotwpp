@@ -2,10 +2,11 @@ import { Client, LocalAuth } from 'whatsapp-web.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE_SESSION_DIR = process.env.WHATSAPP_SESSION_DIR || path.join(process.cwd(), '.wwebjs_auth');
-const SESSION_PATH = path.join(BASE_SESSION_DIR, 'session');
 import * as qrcode from 'qrcode';
 import { handleMessage } from '../handlers/messageHandler';
+
+const BASE_SESSION_DIR = process.env.WHATSAPP_SESSION_DIR || path.join(process.cwd(), '.wwebjs_auth');
+const SESSION_PATH = path.join(BASE_SESSION_DIR, 'session');
 
 class WhatsAppService {
   private client: Client;
@@ -17,10 +18,23 @@ class WhatsAppService {
         clientId: 'whatsapp-bot',
         dataPath: BASE_SESSION_DIR,
       }),
+      puppeteer: {
+        headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+        ]
+    }
     });
 
     this.client.on('qr', (qr) => {
-      qrcode.toDataURL(qr, (err, url) => {
+      qrcode.toDataURL(qr, (err: any, url: string | null) => {
         if (err) {
           console.error('Error generating QR code:', err);
           return;
@@ -75,10 +89,23 @@ class WhatsAppService {
         clientId: 'whatsapp-bot',
         dataPath: BASE_SESSION_DIR,
       }),
+      puppeteer: {
+        headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+        ]
+    }
     });
 
     this.client.on('qr', (qr) => {
-      qrcode.toDataURL(qr, (err, url) => {
+      qrcode.toDataURL(qr, (err: any, url: string | null) => {
         if (err) {
           console.error('Error generating QR code:', err);
           return;
