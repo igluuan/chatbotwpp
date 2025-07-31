@@ -1,0 +1,287 @@
+Instruções para o Agente de IA: Como Resolver Problemas no Bot do WhatsApp na DisCloud
+
+Este documento descreve as etapas que o agente de IA deve seguir para diagnosticar, verificar e ajustar um projeto TypeScript de um bot do WhatsApp hospedado na DisCloud, usando `whatsapp-web.js`, `puppeteer`, `firebase-admin`, `express`, `node-cron`, `qrcode`, `qrcode-terminal` e `zod`. O objetivo é garantir que o bot inicialize corretamente, exiba o QR code nos logs e funcione sem erros, como os relatados anteriormente (`Navigation failed because browser has disconnected!` e ausência do QR code).
+
+---
+
+### 1. Verificar o `discloud.config`
+O agente deve buscar e ajustar o arquivo `discloud.config` para garantir que ele esteja correto e otimizado para o ambiente da DisCloud.
+
+- **Buscar**:
+  - Confirmar a presença dos campos obrigatórios: `NAME`, `TYPE`, `MAIN`, `RAM`, `AUTORESTART`, `VERSION`, `APT`, `START`.
+  - Verificar se há campos inválidos, como `BUILD`, que não é suportado pela DisCloud.
+  - Confirmar que `MAIN` aponta para `dist/index.js` (arquivo compilado do TypeScript).
+  - Verificar se `RAM` é suficiente (mínimo 512 MB, preferencialmente 1024 MB ou mais para Puppeteer).
+  - Confirmar que `TYPE=site` (devido às dependências gráficas do Puppeteer).
+  - Verificar a lista de dependências no campo `APT` para o Puppeteer/Chromium.
+
+- **Ajustar**:
+  - Remover qualquer campo inválido, como `BUILD`.
+  - Aumentar `RAM` para `1024` ou `2048` se o erro `SIGTERM` ou `browser has disconnected` ocorrer, indicando falta de memória.
+  - Garantir que o campo `APT` inclua todas as bibliotecas necessárias para o Puppeteer:
+    ```
+    chromium-browser libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnspr4 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 libgtk-3-0 libgobject-2.0-0 libpango-1.0-0 libcairo2 libglib2.0-0 libxss1 libxrandr2 libfontconfig1 libfreetype6 libgdk-pixbuf-2.0-0 libatk-adaptor libxkbcommon0 libpangocairo-1.0-0 libpangoft2-1.0-0
+    ```
+  - Definir `AUTORESTART=true` para reiniciar o bot automaticamente em caso de falhas.
+  - Exemplo de `discloud.config` ajustado:
+    ```
+    NAME=TobiasBOT
+    TYPE=site
+    MAIN=dist/index.js
+    RAM=1024
+    AUTORESTART=true
+    VERSION=latest
+    APT=chromium-browser libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnspr4 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdbus-1-3 libdrm2 libgbm1 libgtk-3-0 libgobject-2.0-0 libpango-1.0-0 libcairo2 libglib2.0-0 libxss1 libxrandr2 libfontconfig1 libfreetype6 libgdk-pixbuf-2.0-0 libatk-adaptor libxkbcommon0 libpangocairo-1.0-0 libpangoft2-1.0-0
+    START=npm start
+    ```
+
+---
+
+### 2. Verificar o código do bot (`index.ts` ou similar)
+O agente deve inspecionar o código principal (ex.: `src/index.ts`) para garantir que o `whatsapp-web.js` e o Puppeteer estejam configurados corretamente e que erros sejam logados adequadamente.
+
+- **Buscar**:
+  - Confirmar que o `whatsapp-web.js` está inicializado com `client.initialize()`.
+  - Verificar se o `Client` usa flags do Puppeteer para ambientes restritos, como `--no-sandbox` e `--disable-dev-shm-usage`.
+  - Confirmar que o evento `qr` está configurado para exibir o QR code usando `qrcode-terminal`.
+  - Verificar se há tratamento de erros com `client.on('error')` e `.catch` no `client.initialize()`.
+  - Confirmar se o `express` (se usado) não está interferindo na inicialização do `whatsapp-web.js`.
+  - Verificar a configuração do `firebase-admin`, se presente, para evitar erros como `project_id` ausente.
+
+- **Ajustar**:
+  - Adicionar flags otimizadas para o Puppeteer:
+    ```typescript
+    puppeteer: {
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+      ],
+    }
+    ```
+  - Garantir que o evento `qr` use `qrcode-terminal`:
+    ```typescript
+    client.on('qr', (qr) => {
+      console.log('QR Code gerado:');
+      qrcode.generate(qr, { small: true });
+    });
+    ```
+  - Adicionar tratamento de erros:
+    ```typescript
+    client.on('error', (error) => {
+      console.error('Erro no WhatsApp:', error);
+    });
+    client.initialize().catch((error) => {
+      console.error('Erro ao inicializar o WhatsApp:', error);
+    });
+    ```
+  - Se o `express` não for necessário, removê-lo para liberar recursos. Caso seja usado (ex.: para webhook), garantir que não bloqueie o `whatsapp-web.js`.
+  - Para o Firebase, usar variáveis de ambiente ou arquivo JSON com tratamento de erros:
+    ```typescript
+    import * as admin from 'firebase-admin';
+    import * as dotenv from 'dotenv';
+
+    dotenv.config();
+
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        }),
+      });
+      console.log('Firebase inicializado com sucesso');
+    } catch (error) {
+      console.error('Erro ao inicializar o Firebase:', error);
+    }
+    ```
+
+---
+
+### 3. Verificar o `package.json`
+O agente deve inspecionar o `package.json` para garantir que as dependências estejam atualizadas e compatíveis.
+
+- **Buscar**:
+  - Confirmar que `whatsapp-web.js`, `puppeteer`, `firebase-admin`, `dotenv`, `qrcode`, `qrcode-terminal`, `express`, `node-cron` e `zod` estão em versões recentes.
+  - Verificar se há dependências desatualizadas (ex.: `puppeteer@21.0.0` foi atualizado para `23.5.3`).
+  - Confirmar que o script `start` está definido como `node dist/index.js` e `build` como `tsc`.
+
+- **Ajustar**:
+  - Atualizar dependências desatualizadas:
+    ```bash
+    npm install whatsapp-web.js@latest puppeteer@latest firebase-admin@latest
+    npm audit fix --force
+    ```
+  - Adicionar resoluções para dependências transitivas, se necessário:
+    ```json
+    "resolutions": {
+      "rimraf": "^5.0.0",
+      "glob": "^11.0.0"
+    }
+    ```
+    E executar:
+    ```bash
+    npm install --legacy-peer-deps
+    ```
+  - Exemplo de `package.json` ajustado:
+    ```json
+    {
+      "name": "projetonodejs",
+      "version": "1.0.0",
+      "description": "",
+      "main": "index.js",
+      "scripts": {
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+      },
+      "keywords": [],
+      "author": "",
+      "license": "ISC",
+      "type": "commonjs",
+      "dependencies": {
+        "@types/express": "^5.0.3",
+        "dotenv": "^17.2.1",
+        "express": "^5.1.0",
+        "firebase-admin": "^13.4.0",
+        "node-cron": "^4.2.1",
+        "qrcode": "^1.5.4",
+        "qrcode-terminal": "^0.12.0",
+        "typescript": "^5.8.3",
+        "whatsapp-web.js": "^1.31.0",
+        "zod": "^4.0.14",
+        "puppeteer": "^23.5.3"
+      },
+      "devDependencies": {
+        "@types/qrcode": "^1.5.5",
+        "@types/qrcode-terminal": "^0.12.2",
+        "ts-node": "^10.9.2"
+      }
+    }
+    ```
+
+---
+
+### 4. Verificar o arquivo `.zip`
+O agente deve garantir que o arquivo `.zip` para upload na DisCloud contenha os arquivos corretos.
+
+- **Buscar**:
+  - Confirmar que o `.zip` inclui:
+    - `dist/` (com `index.js` e, se usado, `seu-projeto-firebase-adminsdk.json`).
+    - `package.json`.
+    - `discloud.config`.
+    - `.env` (se usar variáveis de ambiente).
+  - Verificar que arquivos desnecessários (`node_modules`, `src`, `tsconfig.json`) estão excluídos.
+
+- **Ajustar**:
+  - Compilar o projeto localmente:
+    ```bash
+    npm run build
+    ```
+  - Criar o `.zip` com a estrutura:
+    ```
+    whatsapp-bot.zip/
+    ├── dist/
+    │   ├── index.js
+    │   └── seu-projeto-firebase-adminsdk.json (se usado)
+    ├── package.json
+    ├── discloud.config
+    ├── .env (se usado)
+    ```
+
+---
+
+### 5. Testar localmente
+O agente deve orientar o usuário a testar o projeto localmente antes do upload para isolar problemas.
+
+- **Buscar**:
+  - Verificar se o QR code aparece ao executar localmente:
+    ```bash
+    npm run start
+    ```
+  - Confirmar que não há erros no Firebase ou no `whatsapp-web.js`.
+
+- **Ajustar**:
+  - Adicionar logs para depuração (como no código acima).
+  - Resolver qualquer erro local antes de subir para a DisCloud.
+
+---
+
+### 6. Diagnosticar erros nos logs
+O agente deve analisar os logs da DisCloud para identificar a causa da ausência do QR code.
+
+- **Buscar**:
+  - Verificar se há erros como `browser has disconnected` ou `SIGTERM`.
+  - Confirmar se o `express` está consumindo recursos desnecessários (log: `Server is running on port 3000`).
+  - Verificar se o QR code está sendo suprimido por falta de logs ou erros silenciosos.
+
+- **Ajustar**:
+  - Se o erro `browser has disconnected` aparecer, aumentar o `RAM` para `2048` (se permitido) ou contatar o suporte da DisCloud.
+  - Se o `express` não for necessário, removê-lo do código.
+  - Adicionar mais flags do Puppeteer, como `--disable-features=site-per-process`.
+
+---
+
+### 7. Persistência de sessão
+O agente deve verificar se o bot usa persistência de sessão para evitar QR codes repetidos.
+
+- **Buscar**:
+  - Confirmar se o `whatsapp-web.js` usa `LocalAuth` ou `RemoteAuth`.
+  - Verificar se a DisCloud persiste sessões ou se é necessário usar Firebase Firestore.
+
+- **Ajustar**:
+  - Implementar `LocalAuth`:
+    ```typescript
+    const client = new Client({
+      authStrategy: new LocalAuth(),
+      puppeteer: { /* opções */ },
+    });
+    ```
+  - Para maior confiabilidade, usar `RemoteAuth` com Firebase:
+    ```typescript
+    import { Client, RemoteAuth } from 'whatsapp-web.js';
+    import * as admin from 'firebase-admin';
+
+    admin.initializeApp({ /* Configuração do Firebase */ });
+    const db = admin.firestore();
+
+    const client = new Client({
+      authStrategy: new RemoteAuth({
+        clientId: 'whatsapp-bot',
+        dataStore: db.collection('sessions'),
+      }),
+      puppeteer: { /* opções */ },
+    });
+    ```
+
+---
+
+### 8. Contatar suporte da DisCloud
+Se os ajustes acima não resolverem, o agente deve orientar o usuário a contatar o suporte da DisCloud.
+
+- Fornecer:
+  - Logs completos (ex.: `/home/node/.npm/_logs/2025-07-31T01_40_08_269Z-debug-0.log`).
+  - Detalhes do plano (gratuito ou pago).
+  - Configuração do `discloud.config` e `package.json`.
+
+- Contato:
+  - Discord da DisCloud ou ticket: [Discloud Docs - Suporte](https://docs.discloud.com).
+
+---
+
+### Resumo
+O agente deve:
+1. Ajustar o `discloud.config` (RAM=1024, remover campos inválidos, completar APT).
+2. Verificar e otimizar o código do `whatsapp-web.js` e Firebase.
+3. Atualizar dependências no `package.json`.
+4. Garantir que o `.zip` esteja correto.
+5. Testar localmente para isolar problemas.
+6. Analisar logs e ajustar recursos (RAM, flags do Puppeteer).
+7. Implementar persistência de sessão.
+8. Orientar sobre suporte da DisCloud, se necessário.
